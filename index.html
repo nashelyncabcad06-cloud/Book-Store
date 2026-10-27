@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Shop</title>
+    <link href="bootstrap-5.3.8-dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+    <div class="container py-5">
+        <h1 class="text-center text-primary mb-4">
+            Book Shop
+        </h1>
+
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white text-center">
+                Product Cart Manager
+            </div>
+
+            <div class="card-body">
+
+                <div class="text-center mb-4">
+
+                    
+                        <img id="productImage" src="book logo.jpg" ass="text-primary"><h4>
+                        Welcome to my Book shop
+                    </h4>
+                </div>
+
+                <h3 class="text-center text-success mb-3">
+                    Available Products
+                </h3>
+
+                <div class="row" id="productList"></div>
+
+                <hr>
+
+                <div class="text-center mb-4">
+
+                    <button class="btn btn-success" onclick="showSection('addProductSection')">
+                        Add Product
+                    </button>
+
+                    <button class="btn btn-warning" onclick="showSection('updateSection')">
+                        Update Product
+                    </button>
+
+                    <button class="btn btn-danger" onclick="showSection('deleteSection')">
+                        Remove Product
+                    </button>
+
+                    <button class="btn btn-primary" onclick="showSection('searchSection')">
+                        Search Product
+                    </button>
+
+                    <button class="btn btn-info text-white" onclick="showSection('viewSection');viewCart();">
+                        View Cart
+                    </button>
+
+                </div>
+
+                <!-- ADD PRODUCT -->
+
+                <div id="addProductSection" class="border rounded p-3 mb-3 d-none">
+
+                    <h5 class="text-success">
+                        Add Product
+                    </h5>
+
+                    <input type="text" id="productCode" class="form-control mb-2" placeholder="Product Code">
+
+                    <input type="text" id="productName" class="form-control mb-2" placeholder="Product Name">
+
+                    <input type="number" id="productPrice" class="form-control mb-2" placeholder="Price">
+
+                    <input type="text" id="productImagePath" class="form-control mb-2" placeholder="Image Path">
+
+                    <input type="text" id="productPrice" class="form-control mb-2" placeholder="Product Code">
+
+                    <button class="btn btn-success" onclick="addNewProduct()">
+                        Save Product
+                    </button>
+
+                </div>
+
+                <!-- SEARCH -->
+
+                <div id="searchSection" class="border rounded p-3 mb-3 d-none">
+
+                    <h5 class="text-primary">
+                        Search Product
+                    </h5>
+
+                    <input type="text" id="searchCode" class="form-control mb-2" placeholder="Product Code">
+
+                    <button class="btn btn-primary" onclick="searchProduct()">
+                        Search
+                    </button>
+
+                </div>
+
+                <!-- UPDATE -->
+
+                <div id="updateSection" class="border rounded p-3 mb-3 d-none">
+
+                    <h5 class="text-warning">
+                        Update Price
+                    </h5>
+
+                    <input type="text" id="updateCode" class="form-control mb-2" placeholder="Product Code">
+
+                    <input type="nmuber" id="newPrice" class="form-control mb-2" placeholder="New Price">
+
+                    <button class="btn btn-warning" onclick="updateProduct()">
+                        Update
+                    </button>
+
+                </div>
+
+                <!-- DELETE -->
+
+                <div id="deleteSection" class="border rounded p-3 mb-3 d-none">
+
+                    <h5 class="text-danger">
+                        Remove Product from Cart
+                    </h5>
+
+                    <input type="text" id="deleteCode" class="form-control mb-2" placeholder="Product Code">
+
+                    <button class="btn btn-danger" onclick="removeFromCart()">
+                        Remove
+                    </button>
+
+                </div>
+
+                <!-- OUTPUT -->
+
+                <div id="viewSection" class="d-none">
+
+                    <div id="output"></div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+
+        import { initializeApp }
+            from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            getDocs,
+            updateDoc,
+            deleteDoc,
+            doc,
+            query,
+            where
+        }
+            from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+        /* =====================================
+           FIREBASE CONFIG
+        ===================================== */
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDMWL3bC5Uhf-ajGH2XPP0KB3C2hKc6lz8",
+            authDomain: "book-shop-f20c7.firebaseapp.com",
+            projectId: "book-shop-f20c7",
+            storageBucket: "book-shop-f20c7.firebasestorage.app",
+            messagingSenderId: "1075424239668",
+            appId: "1:1075424239668:web:752a5ac71fc2ff7d632a61"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let products = [];
+
+        /* ======================================
+           LOAD PRODUCTS
+        ====================================== */
+
+        async function loadProducts() {
+
+            products = [];
+
+            const snapshot =
+                await getDocs(
+                    collection(db, "products"));
+
+            snapshot.forEach(docu => {
+
+                products.push({
+                    id: docu.id,
+                    ...docu.data()
+                });
+            });
+
+            displayProducts();
+
+        }
+
+        /* =====================================
+           DISPLAY PRODUCTS
+        ===================================== */
+
+        window.displayProducts = function () {
+
+            let html = "";
+
+            products.forEach(products => {
+
+                html += `
+                <div class="col-md-3 mb-3">
+                    
+                <div class="card h-100 shadow-sm">
+                    
+                <img src="${products.image}"
+                     class="card-img-top"
+                     style="height:180px;object--fit:cover;">
+                     
+                <div class="card-body text-center">
+                    
+                <h5>${products.name}</h5>
+                
+                <p class="fw-bold text-primary">
+                    ${products.price}
+                    </p>
+                    
+                    <button 
+                    class="btn btn-success"
+                    onclick="addProductByCode('${products.code}')">
+                    Add To Cart
+                    </button>
+                    
+                    </div>
+                    </div>
+                    </div>
+                    `;
+
+            });
+
+            document.getElementById("productList")
+                .innerHTML = html;
+
+        }
+
+        /* =====================================
+           ADD PRPODUCT
+        ===================================== */
+
+        window.addNewProduct = async function () {
+
+            const code =
+                document.getElementById("productCode").value;
+
+            const name =
+                document.getElementById("productName").value;
+
+            const price =
+                Number(document.getElementById("productPrice").value);
+
+            const image =
+                document.getElementById("productImagePath").value;
+
+            await addDoc(
+                collection(db, "products"),
+                {
+                    code,
+                    name,
+                    price,
+                    image
+                });
+
+            alert("Product Added");
+
+            loadProducts();
+
+        }
+
+        /* ==========================================
+           SEARCH PRODUCT
+        ========================================== */
+
+        window.searchProduct = async function(){
+
+            const code =
+                document.getElementById("searchCode").value;
+
+            const q =
+                query(
+                    collection(db, "products"),
+                    where("code", "==", code)
+                );
+
+            const snapshot =
+                await getDocs(q);
+
+            if (snapshot.empty) {
+
+                document.getElementById("productMessage")
+                    .innerHTML = "Product Not Found";
+
+                return;
+
+            }
+
+            snapshot.forEach(docu => {
+
+                const product = docu.data();
+
+                document.getElementById("productImage")
+                    .src = product.image;
+
+              alert(`Found: ${product.name} -  Price: ${product.price}`);
+
+            });
+        }
+
+        /* =====================================
+           ADD TO CART
+        ===================================== */
+
+        window.addProductByCode = async function (code) {
+
+            const q =
+                query(
+                    collection(db, "products"),
+                    where("code", "==", code)
+                );
+
+            const snapshot =
+                await getDocs(q);
+
+            snapshot.forEach(async (docu) => {
+
+                const product = docu.data();
+
+                await addDoc(
+                    collection(db, "cart"),
+                    {
+                        code: product.code,
+                        name: product.name,
+                        price: product.price,
+
+                    });
+            });
+
+            alert("Added To Cart");
+
+        }
+
+        /* ======================================
+           UPLOAD PRODUCT
+        ====================================== */
+
+        window.updateProduct = async function () {
+
+            const code =
+                document.getElementById("updateCode").value;
+
+            const newPrice =
+                Number(document.getElementById("newPrice").value);
+
+            const q =
+                query(
+                    collection(db, "products"),
+                    where("code", "==", code)
+                );
+
+            const snapshot =
+                await getDocs(q);
+
+            snapshot.forEach(async (docu) => {
+
+                await updateDoc(
+                    doc(db, "products", docu.id),
+                    {
+                        price: newPrice
+                    });
+            });
+
+            alert("Price Updated");
+
+            loadProducts();
+
+        }
+
+        /* =====================================
+           REMOVE FROM CART
+        ===================================== */
+
+        window.removeFromCart = async function () {
+
+            const code =
+                document.getElementById("deleteCode").value;
+
+            const q =
+                query(
+                    collection(db, "cart"),
+                    where("code", "==", code)
+                );
+
+            const snapshot =
+                await getDocs(q);
+            snapshot.forEach(async (docu) => {
+                await deleteDoc(
+                    doc(
+                        db, "cart", docu.id)
+                );
+            });
+
+            alert("Item Removed");
+
+            viewCart();
+        }
+
+        /* ===================================
+           VIEW CART
+        =================================== */
+
+        window.viewCart = async function () {
+            let total = 0;
+            const snapshot =
+                await getDocs(
+                    collection(db, "cart")
+                );
+
+            let html = `
+            <table class="table table-bordered">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Price</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                            `;
+            snapshot.forEach(docu => {
+                const item = docu.data();
+                total += Number(item.price);
+                html += `
+                    <tr>
+                        <td>${item.code}</td>
+                        <td>${item.name}</td>
+                        <td>${item.price}</td>
+                        </tr>
+                        `;
+
+            });
+
+            html += `
+                </tbody>
+                </table>
+
+                <div class="alert alert-success">
+
+                    <strong>Total  :</strong>
+                    ${total}
+                    </div>
+                    `;
+
+            document.getElementById("output").innerHTML = html;
+        }
+
+        /* ====================================
+           SHOW/HIDE SECTIONS
+        ==================================== */
+
+        window.hideAllSections = function () {
+            document.getElementById("searchSection").classList.add("d-none");
+            document.getElementById("updateSection").classList.add("d-none");
+            document.getElementById("deleteSection").classList.add("d-none");
+            document.getElementById("viewSection").classList.add("d-none");
+            document.getElementById("addProductSection").classList.add("d-none");
+        }
+        window.showSection = function (id) {
+            hideAllSections();
+            document.getElementById(id).classList.remove("d-none");
+        }
+        /* =====================================
+           INITIAL LOAD
+        ===================================== */
+
+        loadProducts();
+    </script>
+    </div>
+
+</body>
+
+</html>
